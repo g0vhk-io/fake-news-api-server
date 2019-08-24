@@ -1,0 +1,5 @@
+ImageHash==4.0
+djangorestframework==3.10.2
+django==2.1.7
+mysqlclient==1.4.4
+uWSGI==2.0.18
