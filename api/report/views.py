@@ -12,6 +12,7 @@ from resizeimage import resizeimage
 import hashlib
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import TokenAuthentication
+import urltools
 
 
 def get_or_none(model, *args, **kwargs):
@@ -50,6 +51,10 @@ class ImageUploadView(APIView):
               image_report.image_hash = image_hash_text
               image_report.image = inmemory
               image_report.save()
+              report = Report()
+              report.report_type = 'image'
+              report.image_report = image_report
+              report.save()
               return Response({'key': image_report.id}, status=status.HTTP_201_CREATED)
       else:
           return Response({'reason': 'Image is invalid.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -61,7 +66,7 @@ class LinkUploadView(APIView):
     def post(self, request, *args, **kwargs):
         url = request.data.get('url', None)
         if url is not None:
-            url = url_normalize(url)
+            url = normalize(url)
             url_hash = str(hashlib.md5(url.encode('utf-8')).hexdigest())
             existed_object = get_or_none(LinkReport, url_hash=url_hash) 
             if existed_object is not None:
@@ -71,6 +76,10 @@ class LinkUploadView(APIView):
                 link_report.url = url
                 link_report.url_hash = url_hash
                 link_report.save()
+                report = Report()
+                report.report_type = 'link'
+                report.link_report = link_report
+                report.save()
                 return Response({'key': link_report.id}, status=status.HTTP_201_CREATED)
         else:
             return Response({'reason': 'Image is invalid.'}, status=status.HTTP_400_BAD_REQUEST)
