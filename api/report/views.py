@@ -9,6 +9,7 @@ from PIL import Image
 import imagehash
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from io import BytesIO
+from resizeimage import resizeimage
 
 
 class FileSerializer(serializers.ModelSerializer):
@@ -25,11 +26,10 @@ class ImageUploadView(APIView):
           pil_image = Image.open(orig_image)
           width, height = pil_image.size
           max_dim = 1200
-          ratio = min(max_dim /width, max_dim /height)
           if width > max_dim :
-            pil_image = pil_image.resize((max_dim , int(ratio * height)), Image.ANTIALIAS)
-          if height > max_dim :
-            pil_image = pil_image.resize((int(ratio * width), max_dim ), Image.ANTIALIAS)
+              pil_image = resizeimage.resize_width(pil_image, max_dim)
+          elif height > max_dim :
+              pil_image = resizeimage.resize_height(pil_image, max_dim)
           print(orig_image.__dict__)
           output = BytesIO()
           pil_image.save(output, format='JPEG', quality=100)
