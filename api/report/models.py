@@ -5,6 +5,8 @@ import imagehash
 from PIL import Image
 from url_normalize import url_normalize
 from goose3 import Goose
+import os
+from uuid import uuid4
 # Create your models here.
 
 ReportTypes = (
@@ -13,15 +15,14 @@ ReportTypes = (
 )
 
 
+def rename_upload_file(instance, filename):
+    basefilename, file_extension = os.path.splitext(filename)
+    return 'fakenews/image/' + str(uuid4()) + file_extension
+
 class ImageReport(models.Model):
     image_hash = models.CharField(max_length=128, blank=True)
-    image = models.ImageField(upload_to='fakenews/image')
+    image = models.ImageField(upload_to=rename_upload_file)
 
-    def save(self, *args, **kwargs):
-        image = self.image
-        image_hash_text = imagehash.phash(Image.open(image))
-        self.image_hash = image_hash_text
-        super(ImageReport, self).save(*args, **kwargs)
 
 class LinkReport(models.Model):
     url = models.CharField(max_length=2048)
