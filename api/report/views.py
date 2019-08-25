@@ -10,6 +10,8 @@ from django.core.files.uploadedfile import InMemoryUploadedFile
 from io import BytesIO
 from resizeimage import resizeimage
 import hashlib
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.authentication import TokenAuthentication
 
 
 def get_or_none(model, *args, **kwargs):
@@ -20,6 +22,8 @@ def get_or_none(model, *args, **kwargs):
 
 
 class ImageUploadView(APIView):
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (TokenAuthentication,)
     def post(self, request, *args, **kwargs):
       image_data = request.data.get('image', None)
       if image_data is not None:
@@ -52,6 +56,8 @@ class ImageUploadView(APIView):
 
 
 class LinkUploadView(APIView):
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (TokenAuthentication,)
     def post(self, request, *args, **kwargs):
         url = request.data.get('url', None)
         if url is not None:
