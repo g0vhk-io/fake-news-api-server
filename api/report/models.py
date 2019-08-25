@@ -20,12 +20,13 @@ def rename_upload_file(instance, filename):
     return 'fakenews/image/' + str(uuid4()) + file_extension
 
 class ImageReport(models.Model):
-    image_hash = models.CharField(max_length=128, blank=True)
+    image_hash = models.CharField(max_length=128, unique=True)
     image = models.ImageField(upload_to=rename_upload_file)
 
 
 class LinkReport(models.Model):
     url = models.CharField(max_length=2048)
+    url_hash = models.CharField(max_length=64, unique=True)
     title = models.CharField(max_length=1024, blank=True)
     text = models.CharField(max_length=4096, blank=True)
     short_text = models.CharField(max_length=4096, blank=True)
