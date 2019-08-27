@@ -22,11 +22,30 @@ def get_or_none(model, *args, **kwargs):
         return None
 
 
+class ListReportView(APIView):
+    def get(self, request, *args, **kwargs):
+        def get_image_report(r):
+            if r is None:
+                return None
+            return {'image': r.image.url, 'description': r.description}
+
+        def get_link_report(r):
+            if r is None:
+                return None
+            return {'url': r.url, 'title': r.title, 'short_text': r.short_text, 'image': r.image}
+        reports = Report.objects.all().prefetch_related('image_report', 'link_report')
+        output = [{'type': r.report_type, 'status': r.status, 'image': get_image_report(r.image_report), 'link': get_link_report(r.link_report)} for r in reports]
+        return Response(output)
+
+
 class ImageUploadView(APIView):
     permission_classes = (IsAuthenticated,)
     authentication_classes = (TokenAuthentication,)
     def post(self, request, *args, **kwargs):
+      print('asdfdsa')
       image_data = request.data.get('image', None)
+      description = request.data.get('description', '')
+      print(request.data)
       if image_data is not None:
           orig_image = image_data
           pil_image = Image.open(orig_image)
@@ -50,6 +69,7 @@ class ImageUploadView(APIView):
               image_report = ImageReport()
               image_report.image_hash = image_hash_text
               image_report.image = inmemory
+              image_report.description = description
               image_report.save()
               report = Report()
               report.report_type = 'image'
@@ -82,4 +102,4 @@ class LinkUploadView(APIView):
                 report.save()
                 return Response({'key': link_report.id}, status=status.HTTP_201_CREATED)
         else:
-            return Response({'reason': 'Image is invalid.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'reason': 'URL is invalid.'}, status=status.HTTP_400_BAD_REQUEST)

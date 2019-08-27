@@ -33,6 +33,7 @@ def rename_upload_file(instance, filename):
 
 class ImageReport(models.Model):
     image_hash = models.CharField(max_length=128, unique=True)
+    description = models.CharField(max_length=2048, blank=True)
     image = models.ImageField(upload_to=rename_upload_file)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
