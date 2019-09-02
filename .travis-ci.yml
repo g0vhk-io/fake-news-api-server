@@ -4,7 +4,7 @@ env:
     - COMMIT=${TRAVIS_COMMIT::8}
     - REPO=fake-news-api-server
     - ORG=g0vhk
-
+language: generic
 services:
   - docker
 
