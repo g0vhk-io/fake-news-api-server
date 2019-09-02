@@ -52,12 +52,15 @@ class LinkReport(models.Model):
 
     def save(self, *args, **kwargs):
         self.url = normalize(self.url)
-        g = Goose()
-        article = g.extract(url=self.url)
-        self.title = article.title
-        self.short_text = article.meta_description
-        self.text = article.cleaned_text
-        self.image = article.opengraph.get('image', '') if article.top_image is None else article.top_image.src
+        try:
+            g = Goose()
+            article = g.extract(url=self.url)
+            self.title = article.title
+            self.short_text = article.meta_description
+            self.text = article.cleaned_text
+            self.image = article.opengraph.get('image', '') if article.top_image is None else article.top_image.src
+        except:
+            pass
         super(LinkReport, self).save(*args, **kwargs)
 
 class Report(models.Model):

@@ -13,6 +13,7 @@ import hashlib
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import TokenAuthentication
 import urltools
+from datetime import datetime
 
 
 def get_or_none(model, *args, **kwargs):
@@ -38,14 +39,24 @@ class ListReportView(APIView):
         return Response(output)
 
 
+def check_too_many_reports():
+    today = datetime.now().date()
+    num_today_reports = Report.objects.filter(created_at__date=today).count()
+    print(num_today_reports)
+    if num_today_reports >= 50:
+        return Response({'too_many': True, 'result': 'Not Okay'})
+    return None
+
+
 class ImageUploadView(APIView):
     permission_classes = (IsAuthenticated,)
     authentication_classes = (TokenAuthentication,)
     def post(self, request, *args, **kwargs):
-      print('asdfdsa')
       image_data = request.data.get('image', None)
       description = request.data.get('description', '')
-      print(request.data)
+      r = check_too_many_reports()
+      if r is not None:
+          return r
       if image_data is not None:
           orig_image = image_data
           pil_image = Image.open(orig_image)
@@ -55,7 +66,6 @@ class ImageUploadView(APIView):
               pil_image = resizeimage.resize_width(pil_image, max_dim)
           elif height > max_dim :
               pil_image = resizeimage.resize_height(pil_image, max_dim)
-          print(orig_image.__dict__)
           output = BytesIO()
           pil_image.save(output, format='JPEG', quality=100)
           output.seek(0)
@@ -85,6 +95,11 @@ class LinkUploadView(APIView):
     authentication_classes = (TokenAuthentication,)
     def post(self, request, *args, **kwargs):
         url = request.data.get('url', None)
+        r = check_too_many_reports()
+        print(r)
+        if r is not None:
+           return r
+        print('dfsasda')
         if url is not None:
             url = normalize(url)
             url_hash = str(hashlib.md5(url.encode('utf-8')).hexdigest())
@@ -102,4 +117,4 @@ class LinkUploadView(APIView):
                 report.save()
                 return Response({'key': link_report.id}, status=status.HTTP_201_CREATED)
         else:
-            return Response({'reason': 'URL is invalid.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'reason': 'URL is invalid.'}, status=status.HTTP_399_BAD_REQUEST)
