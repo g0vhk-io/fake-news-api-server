@@ -11,7 +11,8 @@ import urltools
 
 ReportTypes = (
   ('image', 'Image'),
-  ('link', 'Link')
+  ('link', 'Link'),
+  ('text', 'Text')
 )
 
 ReportStatuses = (
@@ -38,10 +39,17 @@ class ImageReport(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    def __str__(self):
+        return self.image.url + " " + self.description
+
+
 class TextReport(models.Model):
     description = models.CharField(max_length=2048, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.description
 
 class LinkReport(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
@@ -53,7 +61,9 @@ class LinkReport(models.Model):
     short_text = models.CharField(max_length=4096, blank=True)
     image = models.CharField(max_length=4096, blank=True)
 
-
+    def __str__(self):
+        return '[' + self.short_text + '] ' + self.url
+    
     def save(self, *args, **kwargs):
         self.url = normalize(self.url)
         try:
