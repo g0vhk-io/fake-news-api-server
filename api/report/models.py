@@ -24,7 +24,7 @@ ReportStatuses = (
 
 def normalize(url):
     url = urltools.normalize(url)
-    return url.split('?')[0]
+    return url
 
 
 def rename_upload_file(instance, filename):
@@ -38,6 +38,10 @@ class ImageReport(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+class TextReport(models.Model):
+    description = models.CharField(max_length=2048, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
 class LinkReport(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
@@ -70,6 +74,7 @@ class Report(models.Model):
     report_type = models.CharField(max_length=128, choices=ReportTypes)
     link_report = models.ForeignKey(LinkReport, on_delete=models.CASCADE, null=True, blank=True)
     image_report = models.ForeignKey(ImageReport, on_delete=models.CASCADE, null=True, blank=True)
+    text_report = models.ForeignKey(TextReport, on_delete=models.CASCADE, null=True, blank=True)
 
 
 class Comment(models.Model):

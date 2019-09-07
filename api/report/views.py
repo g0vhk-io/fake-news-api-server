@@ -99,7 +99,6 @@ class LinkUploadView(APIView):
         print(r)
         if r is not None:
            return r
-        print('dfsasda')
         if url is not None:
             url = normalize(url)
             url_hash = str(hashlib.md5(url.encode('utf-8')).hexdigest())
