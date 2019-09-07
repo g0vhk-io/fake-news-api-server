@@ -34,7 +34,7 @@ class ListReportView(APIView):
             if r is None:
                 return None
             return {'url': r.url, 'title': r.title, 'short_text': r.short_text, 'image': r.image}
-        reports = Report.objects.all().prefetch_related('image_report', 'link_report')
+        reports = Report.objects.all().prefetch_related('image_report', 'link_report').order_by('-created_at')
         output = [{'type': r.report_type, 'status': r.status, 'image': get_image_report(r.image_report), 'link': get_link_report(r.link_report)} for r in reports]
         return Response(output)
 
@@ -85,9 +85,30 @@ class ImageUploadView(APIView):
               report.report_type = 'image'
               report.image_report = image_report
               report.save()
-              return Response({'key': image_report.id}, status=status.HTTP_201_CREATED)
+              return Response({'key': report.id}, status=status.HTTP_201_CREATED)
       else:
           return Response({'reason': 'Image is invalid.'}, status=status.HTTP_400_BAD_REQUEST)
+
+class TextUploadView(APIView):
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (TokenAuthentication,)
+    def post(self, request, *args, **kwargs):
+        text = request.data.get('text', None)
+        r = check_too_many_reports()
+        print(r)
+        if r is not None:
+           return r
+        else:
+            #TODO: check uniqueness via similarity
+            text_report = TextReport()
+            text_report.description = text
+            text_report.save()
+            report = Report()
+            report.report_type = 'text'
+            report.text_report = text_report
+            report.save()
+            return Response({'key': report.id}, status=status.HTTP_201_CREATED)
+ 
 
 
 class LinkUploadView(APIView):
@@ -114,6 +135,6 @@ class LinkUploadView(APIView):
                 report.report_type = 'link'
                 report.link_report = link_report
                 report.save()
-                return Response({'key': link_report.id}, status=status.HTTP_201_CREATED)
+                return Response({'key': report.id}, status=status.HTTP_201_CREATED)
         else:
             return Response({'reason': 'URL is invalid.'}, status=status.HTTP_399_BAD_REQUEST)
