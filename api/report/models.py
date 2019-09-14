@@ -23,6 +23,13 @@ ReportStatuses = (
   ('wrong', 'Wrong')
 )
 
+EventTypes = (
+  ('created', 'Created'),
+  ('status_updated', 'Status Updated'),
+  ('resolved', 'Case Closed'),
+  ('reverted', 'Reverted')
+)
+
 def normalize(url):
     url = urltools.normalize(url)
     return url
@@ -87,8 +94,19 @@ class Report(models.Model):
     text_report = models.ForeignKey(TextReport, on_delete=models.CASCADE, null=True, blank=True)
 
 
+class Event(models.Model):
+    report = models.ForeignKey(Report, on_delete=models.CASCADE, null=True, blank=True)
+    event_type = models.CharField(max_length=128, choices=EventTypes)
+    description = models.CharField(max_length=1024, default='', blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    def __str__(self):
+        return str(self.report.id) + " " + self.description
+
+
+
 class Comment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     report = models.ForeignKey(Report, on_delete=models.CASCADE)
+    commented_by = models.IntegerField()
     comment = models.CharField(max_length=4096)

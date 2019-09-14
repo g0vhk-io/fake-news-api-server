@@ -5,4 +5,5 @@ admin.site.register(ImageReport)
 
 admin.site.register(TextReport)
 admin.site.register(LinkReport)
+admin.site.register(Event)
 admin.site.register(Report)

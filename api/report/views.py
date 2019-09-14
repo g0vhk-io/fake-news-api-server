@@ -16,6 +16,14 @@ import urltools
 from datetime import datetime
 
 
+def save_created_event(report):
+    event = Event()
+    event.event_type = "created"
+    event.description = "提交報告"
+    event.report = report
+    event.save()
+
+
 def get_or_none(model, *args, **kwargs):
     try:
         return model.objects.get(*args, **kwargs)
@@ -85,6 +93,7 @@ class ImageUploadView(APIView):
               report.report_type = 'image'
               report.image_report = image_report
               report.save()
+              save_created_event(report)
               return Response({'key': report.id}, status=status.HTTP_201_CREATED)
       else:
           return Response({'reason': 'Image is invalid.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -107,9 +116,20 @@ class TextUploadView(APIView):
             report.report_type = 'text'
             report.text_report = text_report
             report.save()
+            save_created_event(report)
             return Response({'key': report.id}, status=status.HTTP_201_CREATED)
  
 
+class CommentView(APIView):
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (TokenAuthentication,)
+    def post(self, request, *args, **kwargs):
+        return None
+
+
+class ReportDetailView(APIView):
+    def get(self, request, *args, **kwargs):
+        return None
 
 class LinkUploadView(APIView):
     permission_classes = (IsAuthenticated,)
@@ -135,6 +155,7 @@ class LinkUploadView(APIView):
                 report.report_type = 'link'
                 report.link_report = link_report
                 report.save()
+                save_created_event(report)
                 return Response({'key': report.id}, status=status.HTTP_201_CREATED)
         else:
             return Response({'reason': 'URL is invalid.'}, status=status.HTTP_399_BAD_REQUEST)
