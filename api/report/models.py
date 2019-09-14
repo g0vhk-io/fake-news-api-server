@@ -7,6 +7,8 @@ from goose3 import Goose
 import os
 from uuid import uuid4
 import urltools
+from markdownx.models import MarkdownxField
+
 # Create your models here.
 
 ReportTypes = (
@@ -109,4 +111,4 @@ class Comment(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     report = models.ForeignKey(Report, on_delete=models.CASCADE)
     commented_by = models.IntegerField()
-    comment = models.CharField(max_length=4096)
+    comment = MarkdownxField()
