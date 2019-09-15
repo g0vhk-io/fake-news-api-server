@@ -14,6 +14,37 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import TokenAuthentication
 import urltools
 from datetime import datetime
+from django.shortcuts import get_object_or_404
+
+
+def get_image_report(r):
+    if r is None:
+        return None
+    return {'image': r.image.url, 'description': r.description}
+
+def get_link_report(r):
+    if r is None:
+        return None
+    return {'url': r.url, 'title': r.title, 'short_text': r.short_text, 'image': r.image}
+
+
+def get_text_report(r):
+    if r is None:
+        return None
+    return {'description': r.description}
+
+def get_comment(comment):
+    if comment is None:
+        return None
+    return {'md': comment.comment}
+
+
+def save_created_event(report):
+    event = Event()
+    event.event_type = "created"
+    event.description = "提交報告"
+    event.report = report
+    event.save()
 
 
 def get_or_none(model, *args, **kwargs):
@@ -25,17 +56,17 @@ def get_or_none(model, *args, **kwargs):
 
 class ListReportView(APIView):
     def get(self, request, *args, **kwargs):
-        def get_image_report(r):
-            if r is None:
-                return None
-            return {'image': r.image.url, 'description': r.description}
-
-        def get_link_report(r):
-            if r is None:
-                return None
-            return {'url': r.url, 'title': r.title, 'short_text': r.short_text, 'image': r.image}
         reports = Report.objects.all().prefetch_related('image_report', 'link_report').order_by('-created_at')
-        output = [{'type': r.report_type, 'status': r.status, 'image': get_image_report(r.image_report), 'link': get_link_report(r.link_report)} for r in reports]
+        output = [{'type': r.report_type, 'status': r.status, 'image': get_image_report(r.image_report), 'link': get_link_report(r.link_report), 'id': r.id, 'text': get_text_report(r.text_report)} for r in reports]
+        return Response(output)
+
+
+class ReportDetailView(APIView):
+    def get(self, request, *args, **kwargs):
+        pk = int(kwargs['report_id'])
+        r = get_object_or_404(Report, pk=pk)
+        comment = Comment.objects.filter(report__id=pk).first()
+        output = {'comment': get_comment(comment), 'type': r.report_type, 'status': r.status, 'image': get_image_report(r.image_report), 'link': get_link_report(r.link_report), 'text': get_text_report(r.text_report), 'id': r.id}
         return Response(output)
 
 
@@ -85,6 +116,7 @@ class ImageUploadView(APIView):
               report.report_type = 'image'
               report.image_report = image_report
               report.save()
+              save_created_event(report)
               return Response({'key': report.id}, status=status.HTTP_201_CREATED)
       else:
           return Response({'reason': 'Image is invalid.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -107,8 +139,25 @@ class TextUploadView(APIView):
             report.report_type = 'text'
             report.text_report = text_report
             report.save()
+            save_created_event(report)
             return Response({'key': report.id}, status=status.HTTP_201_CREATED)
  
+
+class CommentView(APIView):
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (TokenAuthentication,)
+    def post(self, request, *args, **kwargs):
+        report_id = int(request.data.get('report_id', '-1'))
+        md = request.data.get('comment', '')
+        report =  get_or_none(Report, id=report_id)
+        if report is not None:
+            comment, created = Comment.objects.get_or_create(report_id=report_id,defaults={'commented_by':1})
+            if created:
+                comment.report = report
+            comment.comment = md
+            comment.save()
+            return Response({'result': 'ok'}, status=status.HTTP_201_CREATED)
+        return Response({'reason': 'Invalid.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class LinkUploadView(APIView):
@@ -135,6 +184,7 @@ class LinkUploadView(APIView):
                 report.report_type = 'link'
                 report.link_report = link_report
                 report.save()
+                save_created_event(report)
                 return Response({'key': report.id}, status=status.HTTP_201_CREATED)
         else:
-            return Response({'reason': 'URL is invalid.'}, status=status.HTTP_399_BAD_REQUEST)
+            return Response({'reason': 'URL is invalid.'}, status=status.HTTP_400_BAD_REQUEST)

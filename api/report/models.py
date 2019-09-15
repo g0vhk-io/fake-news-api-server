@@ -7,6 +7,8 @@ from goose3 import Goose
 import os
 from uuid import uuid4
 import urltools
+from markdownx.models import MarkdownxField
+
 # Create your models here.
 
 ReportTypes = (
@@ -21,6 +23,13 @@ ReportStatuses = (
   ('factchecked', 'Fact Checked'),
   ('partially_wrong', 'Partially Wrong'),
   ('wrong', 'Wrong')
+)
+
+EventTypes = (
+  ('created', 'Created'),
+  ('status_updated', 'Status Updated'),
+  ('resolved', 'Case Closed'),
+  ('reverted', 'Reverted')
 )
 
 def normalize(url):
@@ -87,8 +96,19 @@ class Report(models.Model):
     text_report = models.ForeignKey(TextReport, on_delete=models.CASCADE, null=True, blank=True)
 
 
+class Event(models.Model):
+    report = models.ForeignKey(Report, on_delete=models.CASCADE, null=True, blank=True)
+    event_type = models.CharField(max_length=128, choices=EventTypes)
+    description = models.CharField(max_length=1024, default='', blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    def __str__(self):
+        return str(self.report.id) + " " + self.description
+
+
+
 class Comment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     report = models.ForeignKey(Report, on_delete=models.CASCADE)
-    comment = models.CharField(max_length=4096)
+    commented_by = models.IntegerField()
+    comment = MarkdownxField()

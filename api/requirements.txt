@@ -9,3 +9,4 @@ newspaper3k==0.2.8
 url-normalize==1.4.1
 python-resize-image==1.1.19
 urltools==0.3.2
+django-markdownx==2.0.28
