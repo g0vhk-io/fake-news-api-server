@@ -47,6 +47,15 @@ def save_created_event(report):
     event.save()
 
 
+def save_status_updated_event(report, new_status):
+    event = Event()
+    event.event_type = "status_updated"
+    event.description = "狀態更新 (%s)" % (new_status)
+    event.report = report
+    event.save()
+
+
+
 def get_or_none(model, *args, **kwargs):
     try:
         return model.objects.get(*args, **kwargs)
@@ -148,10 +157,17 @@ class CommentView(APIView):
     authentication_classes = (TokenAuthentication,)
     def post(self, request, *args, **kwargs):
         report_id = int(request.data.get('report_id', '-1'))
+        commented_by = int(request.data.get('commented_by', '1'))
+        new_status = request.data.get('status', None)
         md = request.data.get('comment', '')
         report =  get_or_none(Report, id=report_id)
+        print(report.status, new_status)
+        if new_status is not None and new_status != report.status:
+            report.status = new_status
+            save_status_updated_event(report, new_status)
+            report.save()
         if report is not None:
-            comment, created = Comment.objects.get_or_create(report_id=report_id,defaults={'commented_by':1})
+            comment, created = Comment.objects.get_or_create(report_id=report_id,defaults={'commented_by': commented_by})
             if created:
                 comment.report = report
             comment.comment = md
